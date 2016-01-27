@@ -32,10 +32,7 @@ class interact
 	public $result,
 		   $debug = false;
 	
-	function __construct($client_class = "SoapClient")
-	{
-		$this->soapClientClass = $client_class;
-	}
+	function __construct(){}
 	
 	/**
 	 * Constructor responsible for creating PHP dynamic soap client
@@ -43,20 +40,21 @@ class interact
 	 * @param unknown $pod_number WILL BE A 2 or 5 depending on the account location ws5.responsys.net* or ws2.responsys.net*
 	 * @throws Exception
 	 */
-	public function intitializeSoapClient( $wsdl, $end_point )
+	public function intitializeSoapClient( $wsdl, $end_point, $client_class = "SoapClient" )
 	{
-		$this->setSoapParams( $wsdl, $end_point  );
+		$this->setSoapParams( $wsdl, $end_point, $client_class  );
 	
 		if( !$this->setSoapClient() )
 			throw new Exception(" *** Soap Client Init Failed *** ");
 	}
 
-	private function setSoapParams( $wsdl, $end_point )
+	private function setSoapParams( $wsdl, $end_point, $client_class = "SoapClient" )
 	{
 		$this->wsdl          = $wsdl;
 		$this->endPoint      = $end_point;
 		$this->uri           = ( stristr("ws3", $wsdl) || stristr("ws4", $wsdl) ) ? self::SOAP_URI_URSA : null;
 		$this->soapNameSpace = ( stristr("ws3", $wsdl) || stristr("ws4", $wsdl) ) ? self::SOAP_NS_URSA : self::SOAP_NS;
+		$this->soapClientClass = $client_class;
 	}
 	
 	private function setSoapHeaders( $authId = null )
@@ -301,7 +299,7 @@ class interact
 	
 		$result = null;
 		
-		$this->setSoapParams( $wsdl, $endpoint );
+		$this->setSoapParams( $wsdl, $endpoint, $this->soapClientClass );
 	
 		if( $this->setSoapClient() )
 		{
