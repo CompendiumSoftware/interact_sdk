@@ -159,6 +159,7 @@ class interact
 		try{	
 			$result =  self::$soapClient->{ get_class( $instance ) }( $instance->params );
 		} catch (Exception $ex){
+			$this->print_xml();
 			throw $ex;
 		}
 		$this->print_xml();
