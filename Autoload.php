@@ -13,6 +13,7 @@ if ( !function_exists('Responsys_Autoload') ) {
 				'scheduleCampaignLaunch' => 'includes/campaign.php',
 				'triggerCustomEvent' => 'includes/campaign.php',
 				'triggerCampaignMessage' => 'includes/campaign.php',
+				'HAmergeTriggerEmail' => 'includes/campaign.php',
 				'copyContentLibraryItem' => 'includes/content.php',
 				'createContentLibraryItem' => 'includes/content.php',
 				'createDocument' => 'includes/content.php',
@@ -66,7 +67,10 @@ if ( !function_exists('Responsys_Autoload') ) {
 				'RecordData' => 'objects/RecordData.php',	
 				'Record' => 'objects/Record.php',	
 				'RejectChannel' => 'objects/RejectChannel.php',	
-				'UpdateOnMatch' => 'objects/UpdateOnMatch.php'	
+				'UpdateOnMatch' => 'objects/UpdateOnMatch.php',
+				'authenticateServer' => 'objects/Login.php',
+				'loginWithCertificate' => 'objects/Login.php',
+				'ProgressChunk' => 'objects/ProgressChunk.php'
 			);
 		}
 		$path = __DIR__;
