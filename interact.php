@@ -16,7 +16,8 @@ class interact
 	CONST RESPONSYS_PUBLIC_CERTIFICATE = "/Users/mdixon/Documents/certificatefun/ResponsysServerCertificate.cer";
 	CONST CLIENT_PRIVATE_KEY           = "/Users/mdixon/Documents/certificatefun/mdixon/md_private.key";
 	
- 	protected $endPoint,
+ 	protected $soapClientClass,
+ 			  $endPoint,
  			  $wsdl,
  			  $uri,
  			  $soapNameSpace,
@@ -32,7 +33,10 @@ class interact
 	public $result,
 		   $debug = false;
 	
-	function __construct(){}
+	function __construct($client_class = "SoapClient")
+	{
+		$this->soapClientClass = $client_class;
+	}
 	
 	/**
 	 * Constructor responsible for creating PHP dynamic soap client
@@ -106,7 +110,7 @@ class interact
                                      //'proxy_port' => '8888',
 				     				 'cache_wsdl' => WSDL_CACHE_NONE, ) ;
 
-		self::$soapClient = new SoapClient( $this->wsdl, $soapClientParams );
+		self::$soapClient = new $this->soapClientClass( $this->wsdl, $soapClientParams );
 		
 		if( self::$soapClient instanceof SoapClient)
 		{
