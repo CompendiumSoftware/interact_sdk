@@ -5,8 +5,11 @@ include '../bootstrap.php';
 try
 {
 	
-	$folder = "Mason";
-	$list   = "masonList1";
+	$login = "some_login";
+	$pass  = "some_pass";
+	
+	$folder = "Mark_J";
+	$list   = "MJlist4";
 
 	$instance = new interact();
 
@@ -15,9 +18,8 @@ try
 	$instance->intitializeSoapClient( $config_file['location']['wsdl'],
 								      $config_file['location']['endpoint']  );
 
-	if ( $instance->login( $config_file['auth_regular']['login'], $config_file['auth_regular']['pass'] ) )
+	if ( $instance->login( $login, $pass ) )
 	{
-		
 		/*
 		 * merge call begin
 		 */
@@ -55,13 +57,13 @@ try
 		
 		$merge_obj->setMergeRuleParam($rule);
 		
-		$fieldNames = array( "EMAIL_ADDRESS_", "CITY_" );
+		$fieldNames = array( "EMAIL_ADDRESS_", "CUSTOMER_ID_" );
 		
 		$record_1 = new Record();
-		$record_1->setFieldValues( array( "mdixon@responsys.com", "mallard") );
+		$record_1->setFieldValues( array( "scooby@oracle.com", "TEST_MDIXON") );
 		
 		$record_2 = new Record();
-		$record_2->setFieldValues( array( "mdixon7@responsys.com", "mallard") );
+		$record_2->setFieldValues( array( "wilma@gmail.com", "TEST_MDIXON") );
 		
 		$records[] = $record_1;
 		$records[] = $record_2;
@@ -81,30 +83,65 @@ try
 		$custom_obj = new triggerCustomEvent();
 		
 		$custom_event = new CustomEvent();
-		$custom_event->setEventName("Welcome");
+
+		$custom_event->setEventName("DEV_SUPP_TEST");
 		
 		$custom_obj->setCustomEventParam( $custom_event );
 		
 		$identifier = new RecipientIdentifier();
 		$identifier->setValue( RecipientIdentifier::RECIPIENT_ID );
 		
-		$transientDataArray[] = array( "FIRST_NAME" => "Sam" );
-		$transientDataArray[] = array( "LAST_NAME" => "Capote" );
+		
+		/*
+		 * Transient data is optionalData in Responsys Jargon
+		 * These name value pairs can be used to display in the 
+		 * campaign body and/or evaluated by program logic as ETV or "ENTRY TRACKING VARIABLES"
+		 * 
+		 */
+		$transientData = array( 'FIRST_NAME' => 'Scooby',
+								'LAST_NAME'  => 'Doo' );
+		
+		$transientData1 = array( 'FIRST_NAME' => 'Wilma',
+								 'LAST_NAME'  => 'SmartyPants' );
+		
+		$transientDataArray[] = $transientData;
+		$transientDataArray[] = $transientData1;
+		
 		
 		/*
 		 * Obtain recipient id from merge call result!
 		 */
-		foreach( $merge_result_ids->recipientResult as $result )
+	
+		
+		if( is_array( $merge_result_ids->recipientResult ) )
 		{
-			$recipient_ids[] = $result->recipientId;
+			foreach( $merge_result_ids->recipientResult as $result )
+			{
+		
+				print_r($result);
+				foreach( $result as $name => $value )
+				{
+					if( $name == 'recipientId' )
+					{
+						$recipient_ids[] = $value;
+					}
+				}
+			}
 		}
+		elseif( is_object( $merge_result_ids->recipientResult ) )
+		{
+			$recipient_ids[] = $merge_result_ids->recipientResult->recipientId;
+		}
+		else 
+		{
+			throw new Exception("Merge result was an unexpected format, its not safe to trigger custom event!");
+		}
+
 		
 		$custom_obj->setRecipientDataParam( $folder, $list, $identifier, $recipient_ids, $transientDataArray );
 		
 		$trigger_result = $instance->execute( $custom_obj );
-		
-		//print_r( $trigger_result );
-		
+
 		/*
 		 * trigger event call end
 		*/
