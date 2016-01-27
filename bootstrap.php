@@ -1,5 +1,14 @@
 <?php
 
+
+require_once __DIR__ . '/Autoload.php';
+
+/*
+
+$DEBUG = false;
+$USE_CONFIG = false;
+
+
 // Lets be helpful and set up include paths with the proper separator based on OS
 if ( ! defined( "PATH_SEPARATOR" ) ) 
 {
@@ -17,20 +26,22 @@ if ( ! defined( "PATH_SEPARATOR" ) )
 $base_include_path = __DIR__;
 
 // set new runtime include path for requires includes
-set_include_path( $base_include_path . "/includes" . PATH_SEPARATOR . $base_include_path . "/objects" );
+set_include_path( get_include_path() . PATH_SEPARATOR . $base_include_path . "/includes" . PATH_SEPARATOR . $base_include_path . "/objects" );
 
-echo " *** INCLUDING REQUIRED FILES/CLASSES *** \n";
+if($DEBUG){
+	echo " *** INCLUDING REQUIRED FILES/CLASSES *** \n";
+}
 
 //echo " New include path : " . get_include_path() . "\n";
 
 //include base
-echo " Including interact base class interact.php \n";
+if($DEBUG){
+	echo " Including interact base class interact.php \n";
+}
 include 'interact.php';
 
 
 $include_paths = get_include_path();
-
-//print_r( $get_include_paths );
 
 $include_paths_array = explode( PATH_SEPARATOR, $include_paths );
 
@@ -40,12 +51,20 @@ foreach ( $include_paths_array as $path )
 	
 	foreach( $includes as $include )
 	{
-		echo " including " . $include . "\n";
+		if($DEBUG){
+			echo " including " . $include . "\n";
+		}
 		include $include;	
 	}
 }
 
-// Set up a global config file for api user values and soap client wsdl and endpoint values
-global $config_file;
-echo " *** Loading config file *** \n";
-$config_file = parse_ini_file( "config.inc", TRUE );
+if($USE_CONFIG){
+	// Set up a global config file for api user values and soap client wsdl and endpoint values
+	global $config_file;
+	if($DEBUG){
+		echo " *** Loading config file *** \n";
+	}
+	$config_file = parse_ini_file( "config.inc", TRUE );
+}
+*/
+?>

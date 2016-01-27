@@ -151,23 +151,13 @@ class interact
 	public function execute( $instance )
 	{
 		$result = null;
-		
-		try
-		{
+	
+		try{	
 			$result =  self::$soapClient->{ get_class( $instance ) }( $instance->params );
-			$this->print_xml();
+		} catch (Exception $ex){
+			throw $ex;
 		}
-		catch( SoapFault $fault )
-		{
-			echo " *** SOAPFAULT *** \n";
-			$this->print_xml();
-		
-		}
-		catch( Exception $exception )
-		{
-			echo " *** EXCEPTION *** \n";
-			echo $exception->getMessage();
-		}
+		$this->print_xml();
 			
 		if( $this->debug == true )
 			print_r( $result );
@@ -185,8 +175,7 @@ class interact
 		
 		foreach( $objects as $object )
 		{
-			echo "Including object ( file/class ): " . $object . "\n";
-			include( $object );
+			require_once( $object );
 		}
 	}
 	
@@ -223,7 +212,9 @@ class interact
 				}
 				else
 				{	
-					echo "Logged in -> session_id : " . $this->sessionId . "\n";
+					if ($this->debug){ 
+						echo "Logged in -> session_id : " . $this->sessionId . "\n";
+					}
 					self::$isLoggedIn = true;
 					$result = true;
 					
@@ -256,7 +247,9 @@ class interact
 			{
 				self::$isLoggedIn = false;
 				self::$soapClient = null;
-				echo "Logged Out from sessionId : " . $this->sessionId . "\n";
+				if( $this->debug == true ) {
+					echo "Logged Out from sessionId : " . $this->sessionId . "\n";
+				}
 				$result = true;
 			}
 		}
@@ -301,11 +294,11 @@ class interact
 		if( $this->setSoapClient() )
 		{
 			$authServerParams = new authenticateServerCall( $user, $challenge );
-			$this->doApiCall( $authServerParams::API_CALL_NAME, $authServerParams );
+			$this->doApiCall( authenticateServerCall::API_CALL_NAME, $authServerParams );
 		}
 		else
 		{
-			die( self::SOAP_ERROR_CLIENT );
+			throw new SoapFault( self::SOAP_ERROR_CLIENT );
 		}
 	
 		return isset( $this->result->result->authSessionId );
@@ -349,7 +342,7 @@ class interact
 		}
 		else
 		{
-			die( "Failed authenticate server call - exiting" );
+			throw new Exception( "Failed authenticate server call - exiting" );
 		}
 	
 		// Hack to deal with null returns in challenge strings ( weak! )
@@ -385,8 +378,7 @@ class interact
 		}
 		else
 		{
-			echo openssl_error_string();
-			die( "Failed to decrypt the challenge - exiting" );
+			throw new Exception( "Failed to decrypt the challenge " . openssl_error_string() );
 		}
 	
 	
@@ -415,7 +407,7 @@ class interact
 	
 			if ( !openssl_private_encrypt($encryptMe, $encryptedData, $private_key, OPENSSL_PKCS1_PADDING ) )
 			{
-				die( "Failed to Encrypt data with Private Key - exiting");
+				throw new Exception( "Failed to Encrypt data with Private Key - exiting");
 			}
 	
 			// Now we have to unpack data which converts unsigned encrypted data to signed byte type
@@ -446,19 +438,14 @@ class interact
 	
 			$this->execute( 'loginWithCertificate', $encryptedServerChallenge );
 				
-			//print_r( $this->result );
 			return $this->result->result->sessionId;
 	
 		}
 		else
 		{
-			die("Problem during handshake - exiting");
+			throw new SoapFault("Problem during handshake - exiting");
 		}
 	}
 	
 }
-
-
-
-
 ?>
