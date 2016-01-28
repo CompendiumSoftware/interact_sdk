@@ -1,6 +1,6 @@
 <?php
 
-class optionalData
+class OptionalData
 {
 	public $name,
 		   $value;

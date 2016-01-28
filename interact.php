@@ -15,14 +15,8 @@ class interact
 	CONST SOAP_ERROR_HEADER    = " An error occurred during soap client creation - check soap header and cookie ";
 	CONST SOAP_ERROR_CALL_NAME = " Interact_API requires a soap call name in order to run API. " ;
 	
-	CONST RESPONSYS_PUBLIC_CERTIFICATE = "/Users/mdixon/Documents/certificatefun/ResponsysServerCertificate.cer";
-	//CONST CLIENT_PRIVATE_KEY           = "/Users/mdixon/Desktop/allstate/ResponsysPrivateClient2.pem";
-	CONST CLIENT_PRIVATE_KEY           = "/Users/mdixon/Documents/certificatefun/mdixon/private.key";
-	//CONST RESPONSYS_PUBLIC_CERTIFICATE = "/Users/mdixon/Documents/certificatefun/ResponsysServerCertificate.cer";
-	//CONST CLIENT_PRIVATE_KEY           = "/Users/mdixon/Desktop/certificates/aic_md_key.key";
-	//CONST CLIENT_PRIVATE_KEY           = "/Users/mdixon/Desktop/allstate/resp_key.key";
-	
- 	protected $endPoint,
+ 	protected $soapClientClass,
+ 			  $endPoint,
  			  $wsdl,
  			  $uri,
  			  $soapNameSpace,
@@ -46,20 +40,21 @@ class interact
 	 * @param unknown $pod_number WILL BE A 2 or 5 depending on the account location ws5.responsys.net* or ws2.responsys.net*
 	 * @throws Exception
 	 */
-	public function intitializeSoapClient( $wsdl, $end_point )
+	public function intitializeSoapClient( $wsdl, $end_point, $client_class = "SoapClient" )
 	{
-		$this->setSoapParams( $wsdl, $end_point  );
+		$this->setSoapParams( $wsdl, $end_point, $client_class  );
 	
 		if( !$this->setSoapClient() )
 			throw new Exception(" *** Soap Client Init Failed *** ");
 	}
 
-	private function setSoapParams( $wsdl, $end_point )
+	private function setSoapParams( $wsdl, $end_point, $client_class = "SoapClient" )
 	{
 		$this->wsdl          = $wsdl;
 		$this->endPoint      = $end_point;
 		$this->uri           = ( stristr("ws3", $wsdl) || stristr("ws4", $wsdl) ) ? self::SOAP_URI_URSA : null;
 		$this->soapNameSpace = ( stristr("ws3", $wsdl) || stristr("ws4", $wsdl) ) ? self::SOAP_NS_URSA : self::SOAP_NS;
+		$this->soapClientClass = $client_class;
 	}
 	
 	private function setSoapHeaders( $authId = null )
@@ -117,7 +112,7 @@ class interact
                                      //'proxy_port' => '8888',
 				     				 'cache_wsdl' => WSDL_CACHE_NONE, ) ;
 
-		self::$soapClient = new SoapClient( $this->wsdl, $soapClientParams );
+		self::$soapClient = new $this->soapClientClass( $this->wsdl, $soapClientParams );
 		
 		if( self::$soapClient instanceof SoapClient)
 		{
@@ -162,23 +157,14 @@ class interact
 	public function execute( $instance )
 	{
 		$result = null;
-		
-		try
-		{
+	
+		try{	
 			$result =  self::$soapClient->{ get_class( $instance ) }( $instance->params );
+		} catch (Exception $ex){
 			$this->print_xml();
+			throw $ex;
 		}
-		catch( SoapFault $fault )
-		{
-			echo " *** SOAPFAULT *** \n";
-			$this->print_xml();
-		
-		}
-		catch( Exception $exception )
-		{
-			echo " *** EXCEPTION *** \n";
-			echo $exception->getMessage();
-		}
+		$this->print_xml();
 			
 		//if( $this->debug == true )
 		//	print_r( $result );
@@ -196,8 +182,7 @@ class interact
 		
 		foreach( $objects as $object )
 		{
-			echo "Including object ( file/class ): " . $object . "\n";
-			include( $object );
+			require_once( $object );
 		}
 	}
 	
@@ -234,7 +219,9 @@ class interact
 				}
 				else
 				{	
-					echo "Logged in -> session_id : " . $this->sessionId . "\n";
+					if ($this->debug){ 
+						echo "Logged in -> session_id : " . $this->sessionId . "\n";
+					}
 					self::$isLoggedIn = true;
 					$result = true;
 					
@@ -268,7 +255,9 @@ class interact
 			{
 				self::$isLoggedIn = false;
 				self::$soapClient = null;
-				echo "Logged Out from sessionId : " . $this->sessionId . "\n";
+				if( $this->debug == true ) {
+					echo "Logged Out from sessionId : " . $this->sessionId . "\n";
+				}
 				$result = true;
 			}
 		}
@@ -310,7 +299,7 @@ class interact
 	
 		$result = null;
 		
-		$this->setSoapParams( $wsdl, $endpoint );
+		$this->setSoapParams( $wsdl, $endpoint, $this->soapClientClass );
 	
 		if( $this->setSoapClient() )
 		{
@@ -319,7 +308,7 @@ class interact
 		}
 		else
 		{
-			die( self::SOAP_ERROR_CLIENT );
+			throw new SoapFault( self::SOAP_ERROR_CLIENT );
 		}
 	
 		return $result;
@@ -328,19 +317,21 @@ class interact
 	
 	/**
 	 * 
-	 * @param unknown $user
-	 * @param unknown $byte_array_challenge
-	 * @param unknown $pod
-	 * @param string $isHATM
+	 * @param string $user
+	 * @param string $byte_array_challenge
+	 * @param string $wsdl
+	 * @param string $endpoint
+	 * @param string $responsys_public_cert_path
+	 * @param string $client_private_key_path
 	 */
-	public function loginWithCertificate( $user, $byte_array_challenge, $wsdl, $endpoint )
+	public function loginWithCertificate( $user, $byte_array_challenge, $wsdl, $endpoint, $responsys_public_cert_path, $client_private_key_path)
 	{
 	
 		// RESPONSYS PUBLIC CERT
-		$responsys_certificate_file = file_get_contents( self::RESPONSYS_PUBLIC_CERTIFICATE );
+		$responsys_certificate_file = file_get_contents( $responsys_public_cert_path );
 	
 		// PRIVATE KEY REQUIRED FOR ENCRYPTING SERVER CHALLENGE - obtained from openssl cert & key creation process
-		$mdixon_certificate_file = file_get_contents( self::CLIENT_PRIVATE_KEY );
+		$mdixon_certificate_file = file_get_contents( $client_private_key_path );
 	
 		$byte_array = array();
 		$container  = array();
@@ -395,8 +386,7 @@ class interact
 		}
 		else
 		{
-			echo openssl_error_string();
-			die( "Failed to decrypt the challenge - exiting" );
+			throw new Exception( "Failed to decrypt the challenge " . openssl_error_string() );
 		}
 	
 	
@@ -425,7 +415,7 @@ class interact
 	
 			if ( !openssl_private_encrypt($encryptMe, $encryptedData, $private_key, OPENSSL_PKCS1_PADDING ) )
 			{
-				die( "Failed to Encrypt data with Private Key - exiting");
+				throw new Exception( "Failed to Encrypt data with Private Key - exiting");
 			}
 	
 			// Now we have to unpack data which converts unsigned encrypted data to signed byte type
@@ -454,20 +444,24 @@ class interact
 			$loginWithCertObj = new loginWithCertificate( $container3 );
 	
 			$result = $this->execute( $loginWithCertObj );
-				
-			print_r( $result );
+
+			if ($result) {
+				$this->sessionId = $result->result->sessionId;
+				if( !$this->setSoapHeaders() || !$this->setSessionCookie() )
+				{
+					throw new Exception( self::SOAP_ERROR_HEADER );
+				}
+			}
+
+			//print_r( $result );
 			return $result;
 	
 		}
 		else
 		{
-			die("Problem during handshake - exiting");
+			throw new SoapFault("Problem during handshake - exiting");
 		}
 	}
 	
 }
-
-
-
-
 ?>
