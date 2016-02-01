@@ -239,7 +239,6 @@ class interact
 			if ($this->debug) {
 				echo "Attempt to login when already logged in";
 			}
-			$result = true;
 		}
 	
 		return $result;
