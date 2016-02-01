@@ -344,6 +344,13 @@ class interact
 	 */
 	public function loginWithCertificate( $user, $byte_array_challenge, $wsdl, $endpoint, $responsys_public_cert_path, $client_private_key_path)
 	{
+
+		if( self::$isLoggedIn ) {
+			if ($this->debug) {
+				echo "Attempt to loginWithCertificate when already logged in";
+			}
+			return false;
+		}
 	
 		// RESPONSYS PUBLIC CERT
 		$responsys_certificate_file = file_get_contents( $responsys_public_cert_path );
@@ -469,6 +476,8 @@ class interact
 				{
 					throw new Exception( self::SOAP_ERROR_HEADER );
 				}
+
+				self::$isLoggedIn = true;
 			}
 			else {
 				throw new Exception (self::SOAP_ERROR_LOGIN);
