@@ -229,6 +229,17 @@ class interact
 						$this->print_xml();
 				}
 			}
+			else
+			{
+				throw new Exception (self::SOAP_ERROR_LOGIN);
+			}
+		}
+		else
+		{
+			if ($this->debug) {
+				echo "Attempt to login when already logged in";
+			}
+			$result = true;
 		}
 	
 		return $result;
@@ -259,6 +270,13 @@ class interact
 					echo "Logged Out from sessionId : " . $this->sessionId . "\n";
 				}
 				$result = true;
+			}
+			else
+			{
+				if( $this->debug == true ) {
+					echo "Unable to perform logout";
+					$this->print_xml();
+				}
 			}
 		}
 	
@@ -451,6 +469,9 @@ class interact
 				{
 					throw new Exception( self::SOAP_ERROR_HEADER );
 				}
+			}
+			else {
+				throw new Exception (self::SOAP_ERROR_LOGIN);
 			}
 
 			//print_r( $result );
