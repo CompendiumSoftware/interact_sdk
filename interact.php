@@ -256,26 +256,36 @@ class interact
 	
 		if( self::$isLoggedIn )
 		{
-			$loggedOut = self::$soapClient->logout();
-		
-			if( $this->debug == true )
-				$this->print_xml();
-			
-			if( $loggedOut->result == 1 )
-			{
+			try {
+				$loggedOut = self::$soapClient->logout();
+
+				if( $this->debug == true )
+					$this->print_xml();
+
+				if( $loggedOut->result == 1 )
+				{
+					self::$isLoggedIn = false;
+					self::$soapClient = null;
+					if( $this->debug == true ) {
+						echo "Logged Out from sessionId : " . $this->sessionId . "\n";
+					}
+					$result = true;
+				}
+				else
+				{
+					if( $this->debug == true ) {
+						echo "Unable to perform logout";
+						$this->print_xml();
+					}
+				}
+			}
+			catch( \Exception $ex) {
 				self::$isLoggedIn = false;
 				self::$soapClient = null;
 				if( $this->debug == true ) {
-					echo "Logged Out from sessionId : " . $this->sessionId . "\n";
+					echo "Error logging out: " . $ex->getMessage();
 				}
-				$result = true;
-			}
-			else
-			{
-				if( $this->debug == true ) {
-					echo "Unable to perform logout";
-					$this->print_xml();
-				}
+				throw $ex;
 			}
 		}
 	
