@@ -24,6 +24,30 @@ class mergeListMembersRIID extends interact
 	
 }
 
+class mergeListMembers extends interact
+{
+	public $params = array( 'recordData'  => array( 'fieldNames' => null, 'records' => null ),
+							'mergeRule'   => null,
+							'list'        => null );
+		
+	public function setMergeRuleParam( ListMergeRule $rule )
+	{
+		$this->params['mergeRule'] = $rule;
+	}
+	
+	public function setRecordDataParam( array $fieldNames, array $records )
+	{
+		$this->params['recordData']['fieldNames'] = $fieldNames;
+		$this->params['recordData']['records']    = $records;
+	}
+	
+	public function setListParam( InteractObject $interact_object )
+	{
+		$this->params['list'] = $interact_object;
+	}
+	
+}
+
 /**
  * Retrieve a record or set of records by its QueryColumn value
  */
